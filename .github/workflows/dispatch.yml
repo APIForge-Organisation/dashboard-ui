@@ -1,0 +1,32 @@
+name: Dispatch UI update
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ui.html
+
+jobs:
+  dispatch:
+    name: Notify ${{ matrix.repo }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        repo: [sdk-nodejs, sdk-python]
+
+    steps:
+      - name: Trigger dashboard sync on ${{ matrix.repo }}
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GH_PAT }}
+          script: |
+            await github.rest.repos.createDispatchEvent({
+              owner: 'APIForge-Organisation',
+              repo:  '${{ matrix.repo }}',
+              event_type: 'dashboard-ui-updated',
+              client_payload: {
+                sha: context.sha,
+              },
+            });
+            console.log('Dispatched to ${{ matrix.repo }}');
